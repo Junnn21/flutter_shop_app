@@ -21,16 +21,14 @@ class AuthScreen extends StatelessWidget {
         children: [
           Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color.fromRGBO(215, 117, 255, 1).withOpacity(0.5),
-                  const Color.fromRGBO(255, 188, 117, 1).withOpacity(0.9)
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                stops: const [0, 1]
-              )
-            ),
+                gradient: LinearGradient(
+                    colors: [
+                      const Color.fromRGBO(215, 117, 255, 1).withOpacity(0.5),
+                      const Color.fromRGBO(255, 188, 117, 1).withOpacity(0.9)
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    stops: const [0, 1])),
           ),
           SingleChildScrollView(
             child: Container(
@@ -41,32 +39,30 @@ class AuthScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Flexible(
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 20.0),
-                      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 94.0),
-                      transform: Matrix4.rotationZ(-8 * pi / 180)..translate(-10.0),
-                      decoration: BoxDecoration(
+                      child: Container(
+                    margin: const EdgeInsets.only(bottom: 20.0),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 8.0, horizontal: 94.0),
+                    transform: Matrix4.rotationZ(-8 * pi / 180)
+                      ..translate(-10.0),
+                    decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
                         color: Colors.deepOrange.shade900,
                         boxShadow: const [
                           BoxShadow(
-                            blurRadius: 8,
-                            color: Colors.black26,
-                            offset: Offset(0, 2)
-                          )
-                        ]
-                      ),
-                      child: const Text(
-                        'MyShop',
-                        style: TextStyle(
+                              blurRadius: 8,
+                              color: Colors.black26,
+                              offset: Offset(0, 2))
+                        ]),
+                    child: const Text(
+                      'MyShop',
+                      style: TextStyle(
                           color: Colors.white,
                           fontSize: 50,
                           fontFamily: 'Anton',
-                          fontWeight: FontWeight.normal
-                        ),
-                      ),
-                    )
-                  ),
+                          fontWeight: FontWeight.normal),
+                    ),
+                  )),
                   Flexible(
                     flex: deviceSize.width > 600 ? 2 : 1,
                     child: const AuthCard(),
@@ -88,32 +84,50 @@ class AuthCard extends StatefulWidget {
   State<AuthCard> createState() => _AuthCardState();
 }
 
-class _AuthCardState extends State<AuthCard> {
+class _AuthCardState extends State<AuthCard>
+    with SingleTickerProviderStateMixin {
   final GlobalKey<FormState> _formKey = GlobalKey();
   AuthMode _authMode = AuthMode.Login;
-  Map<String, String> _authData = {
-    'email': '',
-    'password': ''
-  };
+  Map<String, String> _authData = {'email': '', 'password': ''};
   var _isLoading = false;
   final _passwordController = TextEditingController();
+  late AnimationController _controller;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _opacityAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 300));
+    _slideAnimation = Tween<Offset>(
+            begin: const Offset(0, -1.5), end: const Offset(0, 0))
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.linear));
+    _opacityAnimation = Tween<double>(begin: 0, end: 1)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
+  }
 
   void _showErrorDialog(String message) {
     showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('An error occured!'),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-            },
-            child: const Text('Okay'),
-          )
-        ],
-      )
-    );
+        context: context,
+        builder: (ctx) => AlertDialog(
+              title: const Text('An error occured!'),
+              content: Text(message),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                  },
+                  child: const Text('Okay'),
+                )
+              ],
+            ));
   }
 
   void _submit() async {
@@ -127,16 +141,12 @@ class _AuthCardState extends State<AuthCard> {
     });
 
     try {
-      if(_authMode == AuthMode.Login) {
-        await Provider.of<Auth>(context, listen: false).login(
-          _authData['email']!, 
-          _authData['password']!
-        );
+      if (_authMode == AuthMode.Login) {
+        await Provider.of<Auth>(context, listen: false)
+            .login(_authData['email']!, _authData['password']!);
       } else {
-        await Provider.of<Auth>(context, listen: false).signUp(
-          _authData['email']!, 
-          _authData['password']!
-        );
+        await Provider.of<Auth>(context, listen: false)
+            .signUp(_authData['email']!, _authData['password']!);
       }
     } on HttpException catch (error) {
       var errorMessage = 'Authentication failed';
@@ -152,8 +162,9 @@ class _AuthCardState extends State<AuthCard> {
         errorMessage = 'Invalid password.';
       }
       _showErrorDialog(errorMessage);
-    } catch(error) {
-      const errorMessage = 'Could not authenticate you. Please try again later.';
+    } catch (error) {
+      const errorMessage =
+          'Could not authenticate you. Please try again later.';
       _showErrorDialog(errorMessage);
     }
 
@@ -167,10 +178,12 @@ class _AuthCardState extends State<AuthCard> {
       setState(() {
         _authMode = AuthMode.Signup;
       });
+      _controller.forward();
     } else {
       setState(() {
         _authMode = AuthMode.Login;
       });
+      _controller.reverse();
     }
   }
 
@@ -179,15 +192,14 @@ class _AuthCardState extends State<AuthCard> {
     final deviceSize = MediaQuery.of(context).size;
 
     return Card(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10.0)
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
       elevation: 8.0,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeIn,
         height: _authMode == AuthMode.Signup ? 320 : 260,
-        constraints: BoxConstraints(
-          minHeight: _authMode == AuthMode.Signup ? 320 : 260
-        ),
+        constraints:
+            BoxConstraints(minHeight: _authMode == AuthMode.Signup ? 320 : 260),
         width: deviceSize.width * 0.75,
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -220,47 +232,57 @@ class _AuthCardState extends State<AuthCard> {
                     _authData['password'] = value!;
                   },
                 ),
-                if (_authMode == AuthMode.Signup)
-                  TextFormField(
-                    enabled: _authMode == AuthMode.Signup,
-                    decoration: const InputDecoration(labelText: 'Confirm password'),
-                    obscureText: true,
-                    validator: _authMode == AuthMode.Signup ? 
-                      (value) {
-                        if (value != _passwordController.text) {
-                          return 'Invalid email!';
-                        }
-                        return null;
-                      } : null,
-                  ),
+                AnimatedContainer(
+                  constraints: BoxConstraints(
+                      minHeight: _authMode == AuthMode.Signup ? 60 : 0,
+                      maxHeight: _authMode == AuthMode.Signup ? 120 : 0),
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeIn,
+                  child: FadeTransition(
+                      opacity: _opacityAnimation,
+                      child: SlideTransition(
+                        position: _slideAnimation,
+                        child: TextFormField(
+                          enabled: _authMode == AuthMode.Signup,
+                          decoration: const InputDecoration(
+                              labelText: 'Confirm password'),
+                          obscureText: true,
+                          validator: _authMode == AuthMode.Signup
+                              ? (value) {
+                                  if (value != _passwordController.text) {
+                                    return 'Invalid email!';
+                                  }
+                                  return null;
+                                }
+                              : null,
+                        ),
+                      )),
+                ),
                 const SizedBox(
                   height: 20,
                 ),
                 if (_isLoading)
                   const CircularProgressIndicator()
-                else 
+                else
                   ElevatedButton(
-                    onPressed: _submit,
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 30.0,
-                        vertical: 8.0
-                      ),
-                      backgroundColor: Theme.of(context).colorScheme.primary
-                    ),
-                    child: Text(_authMode == AuthMode.Login ? 'LOGIN' : 'SIGN UP')
-                  ),
-                  TextButton(
-                    onPressed: _switchAuthMode, 
+                      onPressed: _submit,
+                      style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(30)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 30.0, vertical: 8.0),
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary),
+                      child: Text(
+                          _authMode == AuthMode.Login ? 'LOGIN' : 'SIGN UP')),
+                TextButton(
+                    onPressed: _switchAuthMode,
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 4),
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap
-                    ),
-                    child: Text('${_authMode == AuthMode.Login ? 'SIGN UP' : 'LOGIN'} INSTEAD')
-                  )
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 30.0, vertical: 4),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                    child: Text(
+                        '${_authMode == AuthMode.Login ? 'SIGN UP' : 'LOGIN'} INSTEAD'))
               ],
             ),
           ),

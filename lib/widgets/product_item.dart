@@ -21,8 +21,7 @@ class ProductItem extends StatelessWidget {
           leading: Consumer<Product>(
             builder: (ctx, product, _) => IconButton(
               icon: Icon(
-                product.isFavorite ? Icons.favorite : Icons.favorite_border
-              ),
+                  product.isFavorite ? Icons.favorite : Icons.favorite_border),
               color: Theme.of(context).colorScheme.secondary,
               onPressed: () {
                 product.toggleFavoriteStatus(authData.token, authData.userId);
@@ -34,11 +33,10 @@ class ProductItem extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           trailing: IconButton(
-            onPressed: () {
-              cart.addItem(product.id, product.price, product.title);
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
+              onPressed: () {
+                cart.addItem(product.id, product.price, product.title);
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                   content: const Text(
                     'Added item to cart!',
                   ),
@@ -49,27 +47,25 @@ class ProductItem extends StatelessWidget {
                       cart.removeSingleItem(product.id);
                     },
                   ),
-                )
-              );
-            }, 
-            color: Theme.of(context).colorScheme.secondary,
-            icon: const Icon(
-              Icons.shopping_cart
-            )
-          ),
+                ));
+              },
+              color: Theme.of(context).colorScheme.secondary,
+              icon: const Icon(Icons.shopping_cart)),
         ),
         child: GestureDetector(
-          onTap: () {
-            Navigator.of(context).pushNamed(
-              ProductDetailScreen.routeName,
-              arguments: product.id
-            );
-          },
-          child: Image.network(
-            product.imageUrl, 
-            fit: BoxFit.cover
-          ),
-        ),
+            onTap: () {
+              Navigator.of(context).pushNamed(ProductDetailScreen.routeName,
+                  arguments: product.id);
+            },
+            child: Hero(
+              tag: product.id,
+              child: FadeInImage(
+                placeholder:
+                    AssetImage('assets/images/product-placeholder.png'),
+                image: NetworkImage(product.imageUrl),
+                fit: BoxFit.cover,
+              ),
+            )),
       ),
     );
   }
